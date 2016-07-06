@@ -4,20 +4,20 @@
 
 >유체크 알림 봇은 출석 체크 확인 메시지만 전송할 뿐 출석체크를 하는 기능은 없습니다.<br>
 
-유체크 알림 봇 활성화 <a href="telegram.me/UcheckNotiBot">telegram.me/UcheckNotiBot</a><br>
-Bot available at <a href="telegram.me/UcheckNotiBot">telegram.me/UcheckNotiBot</a>
+유체크 알림 봇 활성화 <a href="https://telegram.me/UcheckNotiBot">telegram.me/UcheckNotiBot</a><br>
+Bot available at <a href="https://telegram.me/UcheckNotiBot">telegram.me/UcheckNotiBot</a>
 
 License : MIT License<br>
 Contact & Help : ldayou@me.com
 
 ## 개발에 참고한 문서
-><a href="https://github.com/pooi/pyTelegramBotAPI/">https://github.com/pooi/pyTelegramBotAPI/</a><br>
+><a href="https://github.com/eternnoir/pyTelegramBotAPI">https://github.com/pooi/pyTelegramBotAPI/</a><br>
 ><a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38</a></li>
 
 <br>
 
 ## Notice
->유체크 알림 봇은 <a href="https://core.telegram.org/bots/api">Telegram cli</a>, <a href="https://github.com/pooi/pyTelegramBotAPI/">pyTelegramBotAPI</a>, MySQL, 파이썬 2.7을 사용합니다.<br>
+>유체크 알림 봇은 <a href="https://core.telegram.org/bots/api">Telegram cli</a>, <a href="https://github.com/eternnoir/pyTelegramBotAPI">pyTelegramBotAPI</a>, MySQL, 파이썬 2.7을 사용합니다.<br>
 
 * pyTelegramBotAPI<br>
 <a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=8&page=1">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=8&page=1</a>
