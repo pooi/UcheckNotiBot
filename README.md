@@ -12,12 +12,13 @@ Contact & Help : ldayou@me.com
 
 ## 개발에 참고한 문서
 ><a href="https://github.com/eternnoir/pyTelegramBotAPI">https://github.com/pooi/pyTelegramBotAPI/</a><br>
-><a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38</a></li>
+><a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38</a><br>
+><a href="http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2">http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2</a>
 
 <br>
 
 ## Notice
->유체크 알림 봇은 <a href="https://core.telegram.org/bots/api">Telegram cli</a>, <a href="https://github.com/eternnoir/pyTelegramBotAPI">pyTelegramBotAPI</a>, MySQL, 파이썬 2.7을 사용합니다.<br>
+>유체크 알림 봇은 <a href="https://core.telegram.org/bots/api">Telegram cli</a>, <a href="https://github.com/eternnoir/pyTelegramBotAPI">pyTelegramBotAPI</a>, MySQL, apscheduler, 파이썬 2.7을 사용합니다.<br>
 
 * pyTelegramBotAPI<br>
 <a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=8&page=1">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=8&page=1</a>
@@ -30,6 +31,16 @@ from telebot import types
 <a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=37">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=37</a>
 ```python
 import MySQLdb
+```
+
+* apscheduler<br>
+<a href="http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2">http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2</a>
+```
+$ sudo pip install apscheduler
+```
+```python
+from apscheduler.jobstores.base import JobLookupError
+from apscheduler.schedulers.background import BackgroundScheduler
 ```
 
 
