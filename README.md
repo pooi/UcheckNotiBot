@@ -79,3 +79,24 @@ administratorChatID = '<INPUT_YOUT_TELEGRAM_CHAT_ID>'
 <br>
 ## How it works
 유체크 알림 봇은 사용자가 /add 명령어를 통해 봇과의 대화 형식으로 수업을 추가하면 cron 형식의 스케줄러가 월요일부터 토요일까지 8시 ~ 19시 사이에 10분 간격으로 해당 시간에 수업이 등록된 사용자가 있는지 확인 후 등록된 수업이 있으면 해당 사용자에게 메시지를 전송합니다. 메시지 전송은 수업시간 최대 10분 전에 이루어집니다.<br>
+
+
+<br>
+## Screenshot
+### /start<br>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1400.PNG" width=45%>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1401.PNG" width=45%><br>
+<br>
+### command<br>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1402.PNG" width=45%><br>
+<br>
+### /add<br>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1403.PNG" width=45%>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1404.PNG" width=45%><br>
+<br>
+### /show<br>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1405.PNG" width=45%><br>
+<br>
+### /delete<br>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1406.PNG" width=45%>
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1407.PNG" width=45%><br>
