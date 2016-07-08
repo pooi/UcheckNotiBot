@@ -93,6 +93,10 @@ administratorChatID = '<INPUT_YOUT_TELEGRAM_CHAT_ID>'
 
 
 <br>
+## Database Modeling
+<img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/DBmodeling.jpg" width=60%>
+
+<br>
 ## Screenshot
 ### /start<br>
 <img src="https://github.com/pooi/UcheckNotiBot/blob/master/screenshot/IMG_1400.PNG" width=45%>
