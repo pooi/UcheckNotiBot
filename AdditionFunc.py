@@ -25,6 +25,24 @@ class AdditionFunc:
                 returnValue.append(t)
         return returnValue
 
+    def returnWeekday(self, text):
+        return {
+            '0' : '월',
+            0 : '월',
+            '1' : '화',
+            1 : '화',
+            '2' : '수',
+            2 : '수',
+            '3' : '목',
+            3 : '목',
+            '4' : '금',
+            4 : '금',
+            '5' : '토',
+            5 : '토',
+            '6' : '일',
+            6 : '일'
+        }[text]
+
     def isNumber(self, s):
         try:
             float(s)
@@ -32,7 +50,7 @@ class AdditionFunc:
         except ValueError:
             return False
 
-    def returnColumnName(self, text):
+    def returnTime(self, text):
         text = text.replace(' ', '')
         text = text.replace(':', '')
         # 숫자가 아닌 문자가 있는지 확인
@@ -46,14 +64,17 @@ class AdditionFunc:
             hour = int(text[:2])
             if 7 < hour < 19:
                 min = int(text[2:])
-                min = float(min/10)
-                if int(min*10)%10 != 0:
-                    min += 0.5
-                min = int(round(min))*10
-                time = text[:2] + str(min)
-                time = self.changeTime(time, -10)
+                if min%10 != 0:
+                    min = min + (10 - min%10)
 
-                return 't' + time
+                if min<10:
+                    min = '0' + str(min)
+                else:
+                    min = str(min)
+
+                time = text[:2] + min
+
+                return time
             else: # 시간 범위 체크
                 return 'error'
         else: # 길이 체크
@@ -67,14 +88,9 @@ class AdditionFunc:
             subject = d[2]
             time = d[3]
 
-            weekdays = ''
-            for w in weekday:
-                weekdays = weekdays + w + ', '
+            weekdays = ", ".join(weekday)
 
-            length = len(weekdays)-2
-            weekdays = weekdays[:length]
-
-            time = time[:2] + '시 ' + time[2:] + '분'
+            time = self.setTimeMsg(time)
 
             msg = '{}. {}({} {})\n'\
                 .format(count, subject, weekdays, time)

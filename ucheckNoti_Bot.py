@@ -19,7 +19,7 @@ from telebot import types
 API_TOKEN = '<INPUT_YOUR_API_KEY>'
 bot = telebot.TeleBot(API_TOKEN)
 
-# administratorChatID = '<INPUT_YOUR_TELEGRAM_CHAT_ID>'
+administratorChatID = '<INPUT_YOUR_TELEGRAM_CHAT_ID>'
 
 # Connect database
 host = '<INPUT_YOUR_DATABASE_SERVER_HOST>'
@@ -43,11 +43,13 @@ help_message =(
     "저장된 수업 시간에서 최대 10분 전에 출석 체크 확인 메시지를 전송합니다.\n\n"
 
     "이 봇의 고유 주소는 telegram.me/UcheckNotiBot 입니다. "
-    "봇에 대한 소스 코드는 github.com/pooi/UcheckNotiBot 에서 확인할 수 있습니다."
+    "유체크 알림 봇은 오픈소스로 프로젝트입니다. "
+    "소스 코드는 깃허브(github.com/pooi/UcheckNotiBot)에서 확인할 수 있습니다."
     "기타 문의 사항은 ldayou@me.com으로 문의 바랍니다. "
     "이메일로 문의할 경우에는 ChatID를 함께 전송해주세요. "
     "(ChatID는 /info 명령어를 통해 확인할 수 있습니다.)\n"
-    "** 유체크 알림 봇은 사용자의 이름 및 전화번호 등 개인정보를 수집하지 않습니다. \n\n"
+    "** 유체크 알림 봇은 사용자가 입력한 정보, ChatID, 활성화한 날짜 이외의 정보(이름 등)를"
+    " 수집하지 않습니다.\n\n"
 
     "유체크 알림 봇에서 사용할 수 있는 명령어는 총 5개로 각각의 명령어에 대한 설명은 아래와 같습니다.\n\n"
     "/help - 도움말을 확일할 수 있습니다.\n"
@@ -86,7 +88,8 @@ addSubject_message=(
     "출석 확인 메시지는 등록된 시간에서 최대 10분 전에 전송됩니다. "
     "(ex. 14시 00분 수업일 경우 13시 50분에 메시지 전송, "
     "09시 53분 수업일 경우 09시 50분에 메시지 전송)\n\n"
-    "** 수업 등록은 08:00 ~ 18:50까지의 수업만 등록이 가능합니다."
+    "** 수업 등록은 08:00 ~ 18:50까지의 수업만 등록이 가능합니다.\n"
+    "** 같은 수업이지만 요일별로 수업시간이 다를 경우 요일별로 나워서 등록해야 합니다."
 )
 
 # 특정 시간 간격으로 스케줄러로부터 호출되는 함수
@@ -98,13 +101,14 @@ def sendNotification(bot, mydb):
     :param bot: bot controller
     :param mydb: database controller
     '''
+
     # Bring current week, hour, minute
     todayWeek = datetime.datetime.today().weekday()
+    todayWeek = addF.returnWeekday(todayWeek) # Convert number to String(like 월)
     currentHour = int(datetime.datetime.today().hour)
     currentMin = int(datetime.datetime.today().minute)
 
-    # Create a character in a specific format such as "t1500".
-    # Because database columns name is [t + hour + minute].
+    # Create a character in a specific format such as "1500".
     if currentHour < 10:
         currentHour = '0' + str(currentHour)
     else:
@@ -113,7 +117,8 @@ def sendNotification(bot, mydb):
         currentMin = '0' + str(currentMin)
     else:
         currentMin = str(currentMin)
-    time = 't' + currentHour + currentMin
+    time = currentHour + currentMin
+    time = addF.changeTime(time, 10)
 
     # Bring the data that 'ChatID' and class name from database.
     # 특정 요일 및 시간에 수업을 등록한 사람들의 명단과 수업명을 데이터베이스로 부터 가져옴
@@ -121,8 +126,7 @@ def sendNotification(bot, mydb):
     data = mydb.returnCommand(dbMsg)
 
     if data == 'error':
-        #bot.send_message(administratorChatID, '전송에러 확인 요망')
-        pass
+        bot.send_message(administratorChatID, '전송에러 확인 요망')
     else:
         for d in data:
             cid = d[0] # ChatID
@@ -136,6 +140,7 @@ def sendNotification(bot, mydb):
 if __name__ == '__main__':
     # Add scheduler into another processor
     scheduler.scheduler('cron', "1", sendNotification, bot, mydb)
+    bot.send_message(administratorChatID, '동작중')
 
 # When receive '/start' command
 @bot.message_handler(commands=['start'])
@@ -210,13 +215,7 @@ def sb1(m):
         else:
             weekTemp.append(weekdayList) # Add weekday in the dictionary
 
-            # "월, 화, 수"와 같은 형식을 만들기 위한 임시 변수
-            # Temporary variables for creating a format such as "월, 화, 수"
-            weekday = ''
-            for w in weekdayList:
-                weekday  = weekday + w + ', '
-            length = len(weekday)-2
-            weekday = weekday[:length]
+            weekday = ", ".join(weekdayList)
 
             text = (
                 "[{}] 무슨 수업인가요?\n"
@@ -249,7 +248,8 @@ def sb2(m):
                 "{} 과목의 수업 시간을 입력해주세요.(반드시 숫자 4개)\n"
                 "ex. 9시 수업일 경우 - 09:00 or 0900 or 09시 00분, "
                 "오후 3시 수업일 경우 - 15:00 or 1500 or 15시 00분\n"
-                "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분"
+                "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분\n"
+                "* 08:00 ~ 18:50까지의 수업만 등록이 가능합니다."
             ).format(subject)
             msg = bot.send_message(m.chat.id, text)
             bot.register_next_step_handler(msg, sb3)
@@ -265,14 +265,15 @@ def sb3(m):
         bot.send_message(cid, '에러... 다시 시도해주세요.')
     else:
         timeTemp = addSubTemp[cid]
+        timeName = addF.returnTime(m.text) # Get column name such as "1500" using time
 
-        timeName = addF.returnColumnName(m.text) # Get column name such as "t1500" using time because column name consist of 't' + hour + min
         if timeName == 'error': # Receive wrong input type
             text = (
                 "시간을 다시 입력해주세요. (반드시 숫자 4개)\n"
                 "ex. 9시 수업일 경우 - 09:00 or 0900 or 09시 00분, "
                 "오후 3시 수업일 경우 - 15:00 or 1500 or 15시 00분\n"
-                "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분"
+                "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분\n"
+                "* 08:00 ~ 18:50까지의 수업만 등록이 가능합니다."
             )
             msg = bot.send_message(m.chat.id, text)
             bot.register_next_step_handler(msg, sb3)
@@ -288,29 +289,16 @@ def addSubjectToTable(cid):
     inform = addSubTemp[cid]
     weekday = inform[0]
     subject = inform[1] # Class name
-    time = inform[2] # Time form : "t1500"
+    time = inform[2] # Time form : "1500"
 
-    weekdays = ''
-    for w in weekday:
-        msg = mydb.updateNotiTableMsg(w, time, "'{}'".format(subject), cid) # Get UPDATE sql command
-        check = mydb.setCommand(msg) # Register notification table using UPDATE sql command, check error
-        if check==False:
-            break
-        weekdays = weekdays + w # Made weekday text such as "월수금"
+    weekdays = "".join(weekday)
 
+    msg = mydb.updateMemTableMsg('memSubTbl', cid, weekdays, subject, time) # Get INSERT sql command
+    check = mydb.setCommand(msg) # Register chatID, weekday, class name and time in the database
 
     if check: # Do not receive error when using database.
-        time = time[1:] # Remove 't'
-        time = addF.changeTime(time, 10) # Add 10 minute ('1650' -> '1700')
-
-        msg = mydb.updateMemTableMsg('memSubTbl', cid, weekdays, subject, time) # Get INSERT sql command
-        check = mydb.setCommand(msg) # Register chatID, weekday, class name and time in the database
-
         # Make weekday text such as "월, 수, 금"
-        weekdays = ''
-        for i in range(len(weekday)-1):
-            weekdays = weekdays + weekday[i] + ', '
-        weekdays = weekdays + weekday[len(weekday)-1]
+        weekdays = ", ".join(weekday)
 
         returnMsg = ( # Confirm message
             '성공적으로 서버에 저장하였습니다.\n'
@@ -437,14 +425,6 @@ def deleteSubjectToTable(cid, data):
     msg = mydb.deleteMsg('memSubTbl',\
             "chatID = '{}' and weekdays = '{}' and subject = '{}' and time = '{}'".format(cid, weekday, subject, time))
     mydb.setCommand(msg)
-
-    # 각 요일별 알림 테이블에서 삭제
-    # Remove each weekday table from database
-    time = addF.changeTime(time, -10) # reduced 10 minute
-    time = 't' + time # Made database column name
-    for w in weekday:
-        msg = mydb.updateNotiTableMsg(w, time, 'NULL', cid)
-        mydb.setCommand(msg)
     pass
 
 # Receive all message

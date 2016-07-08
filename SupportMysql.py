@@ -10,26 +10,6 @@ class SupportMysql:
     def __init__(self, db):
         self.db = db
 
-    def returnTableName(self, i):
-        i = str(i)
-        return {
-            '0' : 'monTbl',
-            '월' : 'monTbl',
-            '1' : 'tuesTbl',
-            '화' : 'tuesTbl',
-            '2' : 'wedTbl',
-            '수' : 'wedTbl',
-            '3' : 'thurTbl',
-            '목' : 'thurTbl',
-            '4' : 'friTbl',
-            '금' : 'friTbl',
-            '5' : 'satTbl',
-            '토' : 'satTbl',
-            '6' : 'sunTbl',
-            '일' : 'sunTbl'
-        }[i]
-
-
 
     def initMember(self, chatID):
         ''' 초기 사용자를 등록하는 함수 (Register initial user) '''
@@ -39,9 +19,6 @@ class SupportMysql:
         if len(people) == 0: # 사용자가 없다면 새로운 사용자를 등록
             msg = "INSERT INTO memberTbl VALUES('{}', (SELECT CURDATE()));".format(chatID)
             self.setCommand(msg)
-            for i in range(7):
-                msg = self.initMsg(self.returnTableName(i), chatID)
-                self.setCommand(msg)
             return True
         else: # 사용자가 존재한다면 예외 처리
             return False
@@ -81,12 +58,6 @@ class SupportMysql:
         msg = "DELETE FROM {} WHERE ({});".format(table, condition)
         return msg
 
-    def updateNotiTableMsg(self, table, column, modifyText, chatID):
-        ''' 내용을 업데이트하는 명령문을 만듬(인자 : 테이블명, 열이름, 추가할 내용, chatID) '''
-        table = self.returnTableName(table)
-        msg = "UPDATE {} SET {} = {} WHERE chatID = '{}';"\
-            .format(table, column, modifyText, chatID)
-        return msg
 
     def updateMemTableMsg(self, table, chatID, weekdays, subject, time):
         '''
@@ -102,11 +73,9 @@ class SupportMysql:
             .format(table, chatID, weekdays, subject, time)
         return msg
 
-    def selectMsg(self, table, column):
-        ''' 사용자를 선택하는 명령문을 만듬(인자 : 테이블명, 열이름) '''
-        table = self.returnTableName(table)
-        msg = "SELECT chatID,{} FROM {} WHERE {} is not NULL;"\
-            .format(column, table, column)
+    def selectMsg(self, weekday, time):
+        msg = "SELECT chatID, subject FROM memSubTbl WHERE weekdays LIKE '%{}%' and time='{}'"\
+            .format(weekday, time)
         return msg
 
     def selectAllMsg(self, table, chatID):
