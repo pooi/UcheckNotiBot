@@ -11,7 +11,7 @@ License : MIT License<br>
 Contact & Help : ldayou@me.com
 
 ## 개발에 참고한 문서
-><a href="https://github.com/eternnoir/pyTelegramBotAPI">https://github.com/pooi/pyTelegramBotAPI/</a><br>
+><a href="https://github.com/eternnoir/pyTelegramBotAPI">https://github.com/eternnoir/pyTelegramBotAPI</a><br>
 ><a href="http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38">http://www.hardcopyworld.com/gnuboard5/bbs/board.php?bo_table=lecture_rpi&wr_id=38</a><br>
 ><a href="http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2">http://www.clien.net/cs2/bbs/board.php?bo_table=lecture&wr_id=324116&page=2</a>
 
