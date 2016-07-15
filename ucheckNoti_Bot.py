@@ -12,9 +12,11 @@ from MyScheduler import * # import Scheduler
 from SupportMysql import * # import SQL support class
 from AdditionFunc import * # import addition function class
 
+from multiprocessing import Process
+
 # Telegram interface
 import telebot
-from telebot import types
+from telebot import types, apihelper
 
 API_TOKEN = '<INPUT_YOUR_API_KEY>'
 bot = telebot.TeleBot(API_TOKEN)
@@ -132,7 +134,27 @@ def sendNotification(bot, mydb):
             cid = d[0] # ChatID
             subject = d[1] # Class Name
             msg = "{} 수업 출석체크하셨나요?".format(subject)
-            bot.send_message(cid, msg) # Send message to user.
+            p = Process(target=sendMessageProc, args=(bot, mydb, cid, msg)) # Use multiprocessing
+            p.start()
+            #bot.send_message(cid, msg) # Send message to user.
+
+def sendMessageProc(bot, mydb, cid, msg):
+    try:
+        bot.send_message(cid, msg)
+    except telebot.apihelper.ApiException as e:
+        error_code = str(e.result)
+        if error_code.find("403") != -1: # When user delete and stop bot
+            # Delete user from the database
+            msg1 = mydb.deleteMsg('memberTbl', "chatID = '{}'".format(cid))
+            check = mydb.setCommand(msg1)
+            if check == False:
+                bot.send_message(administratorChatID, "DB 멤버({}) 삭제 에러".format(cid))
+            else:
+                msg2 = mydb.deleteMsg('memSubTbl', "chatID = '{}'".format(cid))
+                check = mydb.setCommand(msg2)
+                if check == False:
+                    bot.send_message(administratorChatID, "DB 멤버({}) 수업 삭제 에러".format(cid))
+
 
 
 
@@ -153,10 +175,16 @@ def send_start(m):
 
     if check: # Send success message
         msg = start_message_True.format(name, name, cid) + '\n' + help_message
-        bot.send_message(cid, msg, reply_markup=markup)
+        try:
+            bot.send_message(cid, msg, reply_markup=markup)
+        except telebot.apihelper.ApiException as e:
+            pass
     else: # Send fail message
         msg = start_message_False.format(name)
-        bot.send_message(cid, msg, reply_markup=markup)
+        try:
+            bot.send_message(cid, msg, reply_markup=markup)
+        except telebot.apihelper.ApiException as e:
+            pass
 
 # When receive '/help' command
 @bot.message_handler(commands=['help'])
@@ -164,7 +192,10 @@ def send_help(m):
     ''' Send help message '''
     cid = m.chat.id
     markup = types.ReplyKeyboardHide()
-    bot.send_message(cid, help_message, reply_markup=markup)
+    try:
+        bot.send_message(cid, help_message, reply_markup=markup)
+    except telebot.apihelper.ApiException as e:
+        pass
 
 # When receive '/info' command
 @bot.message_handler(commands=['info'])
@@ -174,7 +205,10 @@ def send_info(m):
     name = m.chat.last_name + m.chat.first_name
     markup = types.ReplyKeyboardHide()
     msg = '이름 : {}\nChat ID : {}'.format(name, cid)
-    bot.send_message(cid, msg, reply_markup=markup)
+    try:
+        bot.send_message(cid, msg, reply_markup=markup)
+    except telebot.apihelper.ApiException as e:
+        pass
 
 # When receive '/add' command
 @bot.message_handler(commands=['add'])
@@ -194,24 +228,36 @@ def add_class(m):
         '등록하고자 하는 수업의 요일을 입력해주세요.\n'
         'ex. 월화수 or 월 화 수 or 월,화,수 or 월'
     )
-    msg = bot.send_message(cid, text)
-    bot.register_next_step_handler(msg, sb1)
+    try:
+        msg = bot.send_message(cid, text)
+        bot.register_next_step_handler(msg, sb1)
+    except telebot.apihelper.ApiException as e:
+        return
 
 def sb1(m):
     ''' Receive weekday '''
     cid = m.chat.id
     if m.text == '/cancel': # When receive '/cancel' command
-        bot.send_message(cid, '수업 시간 추가를 취소합니다.')
-        del addSubTemp[cid]
+        try:
+            bot.send_message(cid, '수업 시간 추가를 취소합니다.')
+            del addSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            return
     elif (cid in addSubTemp) == False: # If the key does not exist
-        bot.send_message(cid, '에러... 다시 시도해주세요.')
+        try:
+            bot.send_message(cid, '에러... 다시 시도해주세요.')
+        except telebot.apihelper.ApiException as e:
+            pass
     else:
         weekTemp = addSubTemp[cid]
         weekdayList = addF.returnWeek(m.text) # Get weekdays same as "월화수"
 
         if len(weekdayList) == 0: # Receive the wrong input
-            msg = bot.send_message(cid, '요일을 다시 입력해주세요.\nex. 월화수 or 월 화 수 or 월,화,수 or 월')
-            bot.register_next_step_handler(msg, sb1) # Return to the previous step
+            try:
+                msg = bot.send_message(cid, '요일을 다시 입력해주세요.\nex. 월화수 or 월 화 수 or 월,화,수 or 월')
+                bot.register_next_step_handler(msg, sb1) # Return to the previous step
+            except telebot.apihelper.ApiException as e:
+                pass
         else:
             weekTemp.append(weekdayList) # Add weekday in the dictionary
 
@@ -221,24 +267,36 @@ def sb1(m):
                 "[{}] 무슨 수업인가요?\n"
                 "* 최대 10글자까지만 지원"
             ).format(weekday)
-            msg = bot.send_message(m.chat.id, text)
-            bot.register_next_step_handler(msg, sb2)
+            try:
+                msg = bot.send_message(m.chat.id, text)
+                bot.register_next_step_handler(msg, sb2)
+            except telebot.apihelper.ApiException as e:
+                pass
 
 def sb2(m):
     ''' Receive class name '''
     cid = m.chat.id
 
     if m.text == '/cancel':
-        bot.send_message(cid, '수업 시간 추가를 취소합니다.')
-        del addSubTemp[cid]
+        try:
+            bot.send_message(cid, '수업 시간 추가를 취소합니다.')
+            del addSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            return
     elif (cid in addSubTemp) == False:
-        bot.send_message(cid, '에러... 다시 시도해주세요.')
+        try:
+            bot.send_message(cid, '에러... 다시 시도해주세요.')
+        except telebot.apihelper.ApiException as e:
+            return
     else:
         subTemp = addSubTemp[cid]
 
         if len(m.text) == 0: # When receive empty message
-            msg = bot.send_message(m.chat.id, '과목명이 너무 짧습니다.\n과목명을 다시 입력해주세요.')
-            bot.register_next_step_handler(msg, sb2) # Return to the previous step
+            try:
+                msg = bot.send_message(m.chat.id, '과목명이 너무 짧습니다.\n과목명을 다시 입력해주세요.')
+                bot.register_next_step_handler(msg, sb2) # Return to the previous step
+            except telebot.apihelper.ApiException as e:
+                return
         else:
             # Add class name in the dictionary
             subTemp.append(m.text[:10]) # 10글자 제한으로 저장 (Save as 10 character limit)
@@ -251,18 +309,27 @@ def sb2(m):
                 "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분\n"
                 "* 08:00 ~ 18:50까지의 수업만 등록이 가능합니다."
             ).format(subject)
-            msg = bot.send_message(m.chat.id, text)
-            bot.register_next_step_handler(msg, sb3)
+            try:
+                msg = bot.send_message(m.chat.id, text)
+                bot.register_next_step_handler(msg, sb3)
+            except telebot.apihelper.ApiException as e:
+                pass
 
 def sb3(m):
     ''' Receive class time '''
     cid = m.chat.id
 
     if m.text == '/cancel':
-        bot.send_message(cid, '수업 시간 추가를 취소합니다.')
-        del addSubTemp[cid]
+        try:
+            bot.send_message(cid, '수업 시간 추가를 취소합니다.')
+            del addSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            return
     elif (cid in addSubTemp) == False:
-        bot.send_message(cid, '에러... 다시 시도해주세요.')
+        try:
+            bot.send_message(cid, '에러... 다시 시도해주세요.')
+        except telebot.apihelper.ApiException as e:
+            return
     else:
         timeTemp = addSubTemp[cid]
         timeName = addF.returnTime(m.text) # Get column name such as "1500" using time
@@ -275,14 +342,20 @@ def sb3(m):
                 "잘못된 예 - 9, 9:00, 9시, 오후 03시 30분\n"
                 "* 08:00 ~ 18:50까지의 수업만 등록이 가능합니다."
             )
-            msg = bot.send_message(m.chat.id, text)
-            bot.register_next_step_handler(msg, sb3)
+            try:
+                msg = bot.send_message(m.chat.id, text)
+                bot.register_next_step_handler(msg, sb3)
+            except telebot.apihelper.ApiException as e:
+                pass
         else:
             timeTemp.append(timeName) # Add column name(time) in the dictionary
 
-            msg = addSubjectToTable(cid) # Register weekday, class name and time in the database
-            bot.send_message(m.chat.id, msg)
-            del addSubTemp[cid]
+            try:
+                msg = addSubjectToTable(cid) # Register weekday, class name and time in the database
+                bot.send_message(m.chat.id, msg)
+                del addSubTemp[cid]
+            except telebot.apihelper.ApiException as e:
+                pass
 
 def addSubjectToTable(cid):
     ''' Register weekday, class name and time in the database '''
@@ -332,16 +405,25 @@ def show_class(m):
             '오류로 인하여 수업 조회에 실패하였습니다. '
             '관리자(ldayou@me.com)에게 문의바랍니다.'
         )
-        bot.send_message(cid, text)
+        try:
+            bot.send_message(cid, text)
+        except telebot.apihelper.ApiException as e:
+            return
     elif len(data) == 0: # No data
         text = (
             '{name}님의 저장된 수업 정보가 없습니다.'
         )
-        bot.send_message(cid, text.format(name=name))
+        try:
+            bot.send_message(cid, text.format(name=name))
+        except telebot.apihelper.ApiException as e:
+            return
     else:
-        msg = addF.returnClassMsg(data)
-        msg = "현재 {}님이 등록한 수업입니다.\n\n".format(name) + msg + "\n수업 추가 /add\n수업 삭제 /delete"
-        bot.send_message(cid, msg)
+        try:
+            msg = addF.returnClassMsg(data)
+            msg = "현재 {}님이 등록한 수업입니다.\n\n".format(name) + msg + "\n수업 추가 /add\n수업 삭제 /delete"
+            bot.send_message(cid, msg)
+        except telebot.apihelper.ApiException as e:
+            return
 
 # When receive '/delete' command
 @bot.message_handler(commands=['delete'])
@@ -354,16 +436,22 @@ def delete_subject(m):
     data = mydb.returnCommand(msg)
 
     if data == 'error':
-        text = (
-            '오류로 인하여 수업 조회에 실패하였습니다. '
-            '관리자(ldayou@me.com)에게 문의바랍니다.'
-        )
-        bot.send_message(cid, text)
+        try:
+            text = (
+                '오류로 인하여 수업 조회에 실패하였습니다. '
+                '관리자(ldayou@me.com)에게 문의바랍니다.'
+            )
+            bot.send_message(cid, text)
+        except telebot.apihelper.ApiException as e:
+            return
     elif len(data) == 0:
-        text = (
-            '{name}님의 저장된 수업 정보가 없습니다.'
-        )
-        bot.send_message(cid, text.format(name=name))
+        try:
+            text = (
+                '{name}님의 저장된 수업 정보가 없습니다.'
+            )
+            bot.send_message(cid, text.format(name=name))
+        except telebot.apihelper.ApiException as e:
+            return
     else:
         subjectList = addF.returnClassMsg(data) # Get button title using receiving data
         subjectList = subjectList.split('\n') # Text split
@@ -386,33 +474,51 @@ def delete_subject(m):
         markup.row(itembtnAll)
         markup.row(itembtnCancel)
 
-        msg = bot.send_message(cid, '삭제할 수업을 선택해주세요.', reply_markup=markup)
-        bot.register_next_step_handler(msg, dsb1)
+        try:
+            msg = bot.send_message(cid, '삭제할 수업을 선택해주세요.', reply_markup=markup)
+            bot.register_next_step_handler(msg, dsb1)
+        except telebot.apihelper.ApiException as e:
+            return
 
 def dsb1(m):
     cid = m.chat.id
     markup = types.ReplyKeyboardHide()
 
     if (cid in deleteSubTemp) == False:
-        bot.send_message(cid, '에러... 다시 시도해주세요.', reply_markup=markup)
+        try:
+            bot.send_message(cid, '에러... 다시 시도해주세요.', reply_markup=markup)
+        except telebot.apihelper.ApiException as e:
+            return
     elif m.text == '취소':
-       bot.send_message(cid, '수업 삭제를 취소합니다.', reply_markup=markup)
-       del deleteSubTemp[cid]
+        try:
+            bot.send_message(cid, '수업 삭제를 취소합니다.', reply_markup=markup)
+            del deleteSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            return
     elif m.text == '전체 삭제':
-        dataList = deleteSubTemp[cid]
-        for data in dataList:
-            deleteSubjectToTable(cid, data) # Remove all the data from the database
-        bot.send_message(cid, '성공적으로 삭제하였습니다.\n\n새로운 수업 등록 /add', reply_markup=markup)
-        del deleteSubTemp[cid]
+        try:
+            dataList = deleteSubTemp[cid]
+            for data in dataList:
+                deleteSubjectToTable(cid, data) # Remove all the data from the database
+            bot.send_message(cid, '성공적으로 삭제하였습니다.\n\n새로운 수업 등록 /add', reply_markup=markup)
+            del deleteSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            pass
     elif m.text in addF.returnClassMsg(deleteSubTemp[cid]):
-        index = int(m.text[0])-1
-        data = deleteSubTemp[cid][index]
-        deleteSubjectToTable(cid, data) # Remove one data from the database
-        bot.send_message(cid, '성공적으로 삭제하였습니다.\n\n다른 수업 삭제 /delete\n새로운 수업 등록 /add', reply_markup=markup)
-        del deleteSubTemp[cid]
+        try:
+            index = int(m.text[0])-1
+            data = deleteSubTemp[cid][index]
+            deleteSubjectToTable(cid, data) # Remove one data from the database
+            bot.send_message(cid, '성공적으로 삭제하였습니다.\n\n다른 수업 삭제 /delete\n새로운 수업 등록 /add', reply_markup=markup)
+            del deleteSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            pass
     else: # Occur unexpect error
-        bot.send_message(cid, '에러... 다시 시도해주세요.', reply_markup=markup)
-        del deleteSubTemp[cid]
+        try:
+            bot.send_message(cid, '에러... 다시 시도해주세요.', reply_markup=markup)
+            del deleteSubTemp[cid]
+        except telebot.apihelper.ApiException as e:
+            pass
 
 def deleteSubjectToTable(cid, data):
     ''' Remove data from the database '''
@@ -433,7 +539,10 @@ def echo_all(m):
     if m.text == '/cancel':
         pass
     elif m.text[0] == '/':
-        bot.send_message(m.chat.id, '{} 명령어가 존재하지 않습니다.\n이 봇의 명령어는 /help 명령어를 통해 확인할 수 있습니다.'.format(m.text))
+        try:
+            bot.send_message(m.chat.id, '{} 명령어가 존재하지 않습니다.\n이 봇의 명령어는 /help 명령어를 통해 확인할 수 있습니다.'.format(m.text))
+        except telebot.apihelper.ApiException as e:
+            return
     else:
         pass
 
