@@ -12,7 +12,7 @@ from MyScheduler import * # import Scheduler
 from SupportMysql import * # import SQL support class
 from AdditionFunc import * # import addition function class
 
-from multiprocessing import Process
+import threading
 
 # Telegram interface
 import telebot
@@ -134,8 +134,8 @@ def sendNotification(bot, mydb):
             cid = d[0] # ChatID
             subject = d[1] # Class Name
             msg = "{} 수업 출석체크하셨나요?".format(subject)
-            p = Process(target=sendMessageProc, args=(bot, mydb, cid, msg)) # Use multiprocessing
-            p.start()
+            t = threading.Thread(target=sendMessageProc, args=(bot, mydb, cid, msg))
+            t.start()
             #bot.send_message(cid, msg) # Send message to user.
 
 def sendMessageProc(bot, mydb, cid, msg):
